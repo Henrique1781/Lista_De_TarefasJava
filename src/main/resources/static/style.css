@@ -1,0 +1,810 @@
+/* Substitua TODO o seu CSS por este código */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Variáveis do Tema Escuro (Padrão) */
+:root {
+    --bg-color: #10101b;
+    --surface-color: #1b1b2b;
+    --primary-color: #6c63ff;
+    --text-primary: #f0f0f0;
+    --text-secondary: #a0a0b0;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --modal-bg: #0f0231;
+    --modal-input-bg: #252731;
+    --green: #03a87c;
+    --yellow: #f39c12;
+    --red: #e74c3c;
+    --blue: #3498db; /* Nova cor para prioridade Média */
+    --shadow-color: rgba(0,0,0,0.2);
+}
+
+/* Variáveis do Tema Claro */
+body[data-theme="light"] {
+    --bg-color: #f0f2f5;
+    --surface-color: #ffffff;
+    --primary-color: #5a52d9;
+    --text-primary: #1c1c1e;
+    --text-secondary: #6e6e73;
+    --border-color: #e5e5e5;
+    --modal-bg: #ffffff;
+    --modal-input-bg: #f0f2f5;
+    --blue: #2980b9; /* Nova cor para prioridade Média */
+    --shadow-color: rgba(0,0,0,0.1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    padding: 20px 0 80px 0;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* === ESTILOS DO LOADER === */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(16, 16, 27, 0.7);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    opacity: 1;
+    visibility: visible;
+}
+
+.loader-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid var(--surface-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+body[data-theme="light"] .loader-overlay {
+    background-color: rgba(240, 242, 245, 0.7);
+}
+
+.container { max-width: 600px; width: 90%; margin: 0 auto; }
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+header h1 { font-size: 1.8rem; font-weight: 600; }
+
+.header-right { display: flex; align-items: center; gap: 15px; }
+
+.theme-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    border-radius: 50%;
+    transition: color 0.2s, background-color 0.2s;
+}
+.theme-btn:hover { background-color: var(--surface-color); }
+
+.profile-icon {
+    width: 40px;
+    height: 40px;
+    background-color: var(--surface-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    transition: background-color 0.3s;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.welcome-section { margin: 20px 0; }
+.welcome-section h2 { font-size: 1.5rem; font-weight: 500; }
+.welcome-section p { color: var(--text-secondary); }
+
+.stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 30px;
+}
+.stat {
+    background-color: var(--surface-color);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+}
+.stat span {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+.overdue-stat span {
+    color: var(--red);
+}
+
+.filter-controls {
+    display: flex;
+    background-color: var(--surface-color);
+    border-radius: 10px;
+    padding: 5px;
+    margin-bottom: 15px;
+    transition: background-color 0.3s;
+    flex-wrap: wrap; /* Permite que os botões quebrem a linha */
+}
+#category-filter-controls {
+    margin-bottom: 30px;
+}
+
+.filter-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    min-width: 80px; /* Garante uma largura mínima para os botões */
+}
+.filter-btn.active { background-color: var(--primary-color); color: white; }
+
+.task-card {
+    display: flex;
+    gap: 15px;
+    background-color: var(--surface-color);
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--primary-color);
+    position: relative;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    transition: background-color 0.3s, border-color 0.3s;
+}
+.task-card.priority-Média { border-left-color: var(--blue); } /* Prioridade Média */
+.task-card.priority-Alta { border-left-color: var(--yellow); }
+.task-card.priority-Urgente { border-left-color: var(--red); }
+
+.task-checkbox-container {
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+.task-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.task-info { flex-grow: 1; }
+.task-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 15px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.task-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding-top: 8px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border-color);
+    transition: border-color 0.3s;
+    white-space: pre-wrap; /* Garante a quebra de linha na descrição */
+}
+
+.task-card.completed { border-left-color: var(--green); opacity: 0.7; }
+.task-card.completed .task-title { text-decoration: line-through; }
+
+.task-card.overdue {
+    border-left-color: var(--red);
+    background-color: rgba(231, 76, 60, 0.05);
+}
+
+.task-card.overdue .task-title::after {
+    content: 'ATRASADA';
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--red);
+    background-color: transparent;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--red);
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.task-actions-menu { position: relative; }
+.task-actions-menu .menu-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+.dropdown-menu {
+    position: absolute;
+    top: 30px; right: 0;
+    background-color: #2a2a3f;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    z-index: 10;
+    overflow: hidden;
+}
+body[data-theme="light"] .dropdown-menu { background-color: #eef0f2; }
+
+.dropdown-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.dropdown-menu button:hover { background-color: var(--primary-color); color: white; }
+.dropdown-menu .delete-btn { color: var(--red); }
+.dropdown-menu .delete-btn:hover { color: white; background-color: var(--red); }
+
+#completed-section { margin-top: 40px; }
+#completed-section h3 {
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 15px;
+}
+
+.fab {
+    position: fixed;
+    bottom: 30px; right: 30px;
+    width: 55px; height: 55px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    border: none;
+    font-size: 1.8rem;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.3s;
+}
+.fab:hover { transform: scale(1.1); }
+
+#no-tasks-message { text-align: center; padding: 50px 0; color: var(--text-secondary); }
+#no-tasks-message i { font-size: 3rem; margin-bottom: 10px; }
+
+/* Estilos do Modal */
+/* Estilos do Modal */
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    /* Cor de fundo com transparência é essencial para o desfoque */
+    background: rgba(0, 0, 0, 0.5); 
+    /* A "mágica" do desfoque acontece aqui */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px); /* Para compatibilidade com Safari */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 15px;
+}
+
+.modal-content {
+    background: var(--modal-bg);
+    border: 1px solid var(--border-color);
+    padding: 30px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 5px 25px var(--shadow-color);
+    transition: background-color 0.3s, border-color 0.3s;
+    max-height: 90vh; /* Garante que o modal não ultrapasse a altura da tela */
+    overflow-y: auto; /* Adiciona scroll se o conteúdo for maior */
+}
+.close-btn {
+    position: absolute;
+    top: 10px; right: 15px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.8rem;
+    cursor: pointer;
+}
+#task-form, #login-form, #register-form { display: flex; flex-direction: column; gap: 15px; }
+#task-form h2, #confirm-modal h2, #login-modal h2, #register-modal h2 { text-align: center; margin-bottom: 10px; }
+#task-form label, #login-form label, #register-form label { text-align: left; font-weight: 500; font-size: 0.9rem; color: var(--text-secondary); }
+#task-form input, #task-form textarea, #task-form select, #login-form input, #register-form input {
+    width: 100%; padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--modal-input-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+#task-form select option[disabled] { color: #888; }
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(var(--bg-color) == #10101b ? 1 : 0);
+}
+#task-form .form-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 5px 0;
+}
+#task-form .form-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--modal-input-bg);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+#task-form .form-check:hover { background-color: var(--surface-color); }
+#task-form .form-check input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+#task-form .form-check label {
+    color: var(--text-primary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+#task-form .form-check label i {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+#task-form button[type="submit"], #login-form button[type="submit"], #register-form button[type="submit"] {
+    background: var(--primary-color);
+    color: #fff; border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 1rem; font-weight: bold;
+    cursor: pointer; transition: background 0.2s;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+#login-form p, #register-form p {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+#login-form a, #register-form a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+
+.form-row { display: flex; gap: 15px; }
+.form-group { flex: 1; }
+.hidden { display: none !important; }
+
+/* Estilos do Modal de Confirmação */
+#confirm-modal-text {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1rem;
+}
+.confirm-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+.confirm-modal-actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+.confirm-modal-actions button:hover { transform: translateY(-2px); }
+.btn-secondary {
+    background-color: var(--surface-color);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+.btn-danger {
+    background-color: var(--red);
+    color: white;
+}
+
+/* Estilos para as Notificações (Toast) */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.toast {
+    background-color: var(--green);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+}
+.toast i { font-size: 1.5rem; }
+.toast.error { background-color: var(--red); }
+
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+
+/* Estilos para o ícone de perfil com imagem */
+.profile-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Estilos para o Modal de Informações do Usuário */
+#user-info-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.profile-pic-uploader { text-align: center; margin-bottom: 10px; }
+.profile-pic-uploader label { cursor: pointer; display: inline-block; position: relative; }
+#user-photo-preview {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--border-color);
+    transition: filter 0.2s;
+}
+.profile-pic-uploader.edit-mode label:hover #user-photo-preview { filter: brightness(0.8); }
+#user-photo-edit-prompt {
+    position: absolute;
+    bottom: 10px; left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0,0,0,0.6);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.profile-pic-uploader.edit-mode #user-photo-edit-prompt { opacity: 1; }
+#user-photo-input { display: none; }
+#user-info-view .info-field { margin-bottom: 15px; }
+#user-info-view .info-field label {
+    display: block;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+#user-info-view .info-field p {
+    width: 100%; padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--modal-input-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+#user-info-edit .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+#user-info-edit .form-group label {
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+#user-info-edit .form-group input {
+    width: 100%; padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--modal-input-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+#user-info-form .user-info-actions button {
+    width: 100%;
+    background: var(--primary-color);
+    color: #fff; border: none;
+    padding: 15px; border-radius: 8px;
+    font-size: 1rem; font-weight: bold;
+    cursor: pointer; transition: background 0.2s;
+    margin-top: 10px;
+}
+#user-info-form .user-info-actions button.btn-secondary {
+     background-color: var(--surface-color);
+     color: var(--text-primary);
+     border: 1px solid var(--border-color);
+}
+.user-stat {
+    background-color: var(--modal-input-bg);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    margin-top: 5px;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+.user-stat p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+.user-stat span {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+#logout-btn {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+#logout-btn:hover {
+    opacity: 0.9;
+}
+
+
+/* ======================================================= */
+/* === INÍCIO DAS OTIMIZAÇÕES PARA DISPOSITIVOS MÓVEIS === */
+/* ======================================================= */
+
+@media (max-width: 600px) {
+    body {
+        /* Reduz o espaçamento nas laterais */
+        padding-top: 15px;
+    }
+
+    .container {
+        /* Usa 95% da largura da tela para aproveitar melhor o espaço */
+        width: 95%;
+    }
+
+    header h1 {
+        /* Diminui um pouco o título principal */
+        font-size: 1.6rem;
+    }
+
+    .welcome-section h2 {
+        font-size: 1.3rem;
+    }
+
+    .stats-bar {
+        /* Altera a grade de 4 colunas para 2, criando um layout 2x2 */
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px; /* Aumenta o espaço entre os quadrados */
+    }
+
+    .stat span {
+        /* Reduz o tamanho do número dentro do status */
+        font-size: 1.6rem;
+    }
+    
+    .filter-btn {
+        /* Reduz um pouco o tamanho e o padding dos botões de filtro */
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+
+    .form-row {
+        /* Coloca os campos de data e hora um abaixo do outro */
+        flex-direction: column;
+    }
+
+    .modal-content {
+        /* Reduz o padding do modal para dar mais espaço ao conteúdo */
+        padding: 25px 20px;
+    }
+
+    .fab {
+        /* Diminui o botão de adicionar e o aproxima da borda */
+        width: 50px;
+        height: 50px;
+        font-size: 1.6rem;
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .task-title {
+        font-size: 1rem;
+    }
+
+    .task-meta {
+        font-size: 0.8rem;
+    }
+}
+
+#avatar-container {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: var(--modal-input-bg);
+}
+
+#avatar-container svg {
+    width: 70%;
+    height: 70%;
+    fill: var(--text-secondary);
+}
+
+#avatar-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Estilos para o botão de Instalação do PWA */
+.install-btn {
+    position: fixed;
+    top: 18px;
+    right: 230px; /* Ajustado para não sobrepor outros botões */
+    z-index: 1001;
+    background-color: var(--surface-color);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 8px 15px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    transition: all 0.2s ease-in-out;
+}
+
+.install-btn:hover {
+    transform: translateY(-2px);
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.install-btn i {
+    font-size: 1.2rem;
+}
+
+/* Oculta o botão se a classe .hidden estiver presente */
+.install-btn.hidden {
+    display: none;
+}
+
+/* Ajuste para telas menores */
+@media (max-width: 768px) {
+    .install-btn {
+        top: auto;
+        bottom: 90px;
+        right: 20px;
+        padding: 10px;
+        border-radius: 50%;
+    }
+    .install-btn span {
+        display: none; /* Oculta o texto em telas pequenas, mostrando só o ícone */
+    }
+    .install-btn i {
+       margin: 0;
+    }
+}
+
+.task-card.in-progress {
+    border-left-color: var(--blue); /* Usa a cor azul para indicar "em aberto" */
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.task-card.in-progress .task-title::after {
+    content: 'EM ABERTO';
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--blue);
+    background-color: transparent;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--blue);
+    margin-left: 10px;
+    vertical-align: middle;
+}

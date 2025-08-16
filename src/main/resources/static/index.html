@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Rotina - Controle Pessoal</title>
+
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+</head>
+<body data-theme="dark">
+
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <div class="container">
+        <header>
+            <div class="header-left">
+                 <h1>Minha Rotina</h1>
+            </div>
+            <div class="header-right">
+                 <button type="button" id="theme-toggle-btn" class="theme-btn">
+                    <i class="ph-fill ph-moon"></i>
+                </button>
+                <button type="button" id="mute-toggle-btn" class="theme-btn">
+                    <i class="ph-fill ph-speaker-high"></i>
+                </button>
+                <div class="profile-icon" id="profile-icon-btn">
+                    <i class="ph-fill ph-user"></i>
+                </div>
+                 <button type="button" id="logout-btn" class="hidden">Sair</button>
+            </div>
+        </header>
+
+        <div class="welcome-section">
+            <h2 id="welcome-greeting">Olá, Dev!</h2>
+            <p>Organize seu dia, conquiste seus objetivos</p>
+        </div>
+
+        <div id="location-weather-section" class="stats-bar" style="margin-bottom: 20px; grid-template-columns: 1fr 1fr; display: none;">
+            <div class="stat" style="text-align: left; padding: 15px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i id="weather-icon" class="ph-light ph-sun" style="font-size: 2.5rem;"></i>
+                    <div>
+                        <span id="temperature" style="font-size: 1.5rem; margin-bottom: 0;">--°C</span>
+                        <p id="location" style="color: var(--text-secondary); margin: 0;">Carregando...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="stat" style="text-align: right; padding: 15px;">
+                 <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+                    <div>
+                        <span id="current-time" style="font-size: 1.8rem; margin-bottom: 0; display: block;">--:--</span>
+                        <p id="current-date" style="color: var(--text-secondary); margin: 0;">-- de --- de ----</p>
+                    </div>
+                    <i class="ph-light ph-clock" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <span id="total-tasks-stat">0</span>
+                Total
+            </div>
+            <div class="stat">
+                <span id="completed-tasks-stat">0</span>
+                Concluídas
+            </div>
+            <div class="stat">
+                <span id="pending-tasks-stat">0</span>
+                Pendentes
+            </div>
+            <div class="stat overdue-stat">
+                <span id="overdue-tasks-stat">0</span>
+                Atrasadas
+            </div>
+        </div>
+
+        <div class="filter-controls">
+            <button type="button" class="filter-btn active" data-filter="all">Todas</button>
+            <button type="button" class="filter-btn" data-filter="today">Hoje</button>
+            <button type="button" class="filter-btn" data-filter="upcoming">Próximos</button>
+            <button type="button" class="filter-btn" data-filter="routines">Rotinas</button>
+        </div>
+
+        <div id="category-filter-controls" class="filter-controls"></div>
+
+        <main id="task-list"></main>
+
+        <div id="no-tasks-message" class="hidden">
+            <i class="ph-light ph-clipboard-text"></i>
+            <p>Nenhuma tarefa por aqui.</p>
+        </div>
+        
+        <div id="no-filtered-tasks-message" class="hidden">
+            <i class="ph-light ph-files"></i>
+            <p>Nenhuma tarefa corresponde aos filtros.</p>
+        </div>
+
+        <div id="completed-section" class="hidden">
+            <h3>Concluídas</h3>
+            <div id="completed-task-list"></div>
+        </div>
+        
+    </div>
+
+    <button type="button" class="fab" id="add-task-btn"><i class="ph-bold ph-plus"></i></button>
+
+    <div id="task-modal" class="modal hidden">
+        <div class="modal-content">
+            <button type="button" class="close-btn" id="close-modal-btn">&times;</button>
+            <h2 id="modal-title">Nova Tarefa</h2>
+            <form id="task-form">
+                <input type="hidden" id="task-id">
+                <label for="title">Título da Tarefa</label>
+                <input type="text" id="title" placeholder="Ex: Fazer exercícios" required>
+                <label for="description">Descrição (opcional)</label>
+                <textarea id="description" placeholder="Detalhes sobre a tarefa..."></textarea>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date">Data</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="time"><i class="ph ph-clock"></i> Horário</label>
+                        <input type="text" id="time" list="time-suggestions" placeholder="Ex: 14:15" required pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]">
+                        <datalist id="time-suggestions"></datalist>
+                    </div>
+                </div>
+                <label for="category">Categoria</label>
+                <select id="category">
+                    <option value="Pessoal">Pessoal</option>
+                    <option value="Trabalho">Trabalho</option>
+                    <option value="Saúde">Saúde</option>
+                    <option value="Estudos">Estudos</option>
+                    <option value="Rotina">Rotina</option>
+                </select>
+                <label for="priority">Prioridade</label>
+                <select id="priority">
+                    <option value="Baixa">Baixa</option>
+                    <option value="Média">Média</option>
+                    <option value="Alta">Alta</option>
+                    <option value="Urgente">Urgente</option>
+                </select>
+                <div class="form-options">
+                    <div class="form-check">
+                        <input type="checkbox" id="withNotification" name="withNotification">
+                        <label for="withNotification"><i class="ph-fill ph-bell"></i> Lembrete com notificação</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="recurring" name="recurring">
+                        <label for="recurring"><i class="ph-fill ph-repeat"></i> Criar como rotina recorrente</label>
+                    </div>
+                </div>
+                <button type="submit" id="save-task-btn">Adicionar Tarefa</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="user-info-modal" class="modal hidden">
+        <div class="modal-content">
+            <button type="button" class="close-btn" id="close-user-modal-btn">&times;</button>
+            <h2 id="user-modal-title">Suas Informações</h2>
+            <form id="user-info-form">
+                <div class="profile-pic-uploader">
+                    <label for="user-photo-input">
+                        <div id="avatar-container">
+                            <img alt="Avatar do Usuário" id="user-photo-preview" style="display:none;">
+                        </div>
+                        <span id="user-photo-edit-prompt">Clique para trocar a foto</span>
+                    </label>
+                    <input type="file" id="user-photo-input" accept="image/*">
+                </div>
+                <div id="user-info-view">
+                    <div class="info-field">
+                        <label>Nome</label>
+                        <p id="user-name-display"></p>
+                    </div>
+                    <div class="info-field">
+                        <label>Idade</label>
+                        <p id="user-age-display"></p>
+                    </div>
+                </div>
+                <div id="user-info-edit" class="hidden">
+                    <div class="form-group">
+                        <label for="user-name-input">Seu Nome</label>
+                        <input type="text" id="user-name-input" placeholder="Digite seu nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-age-input">Sua Idade</label>
+                        <input type="number" id="user-age-input" placeholder="Digite sua idade" required>
+                    </div>
+                </div>
+                <div class="user-stat">
+                    <p>Total de tarefas criadas:</p>
+                    <span id="user-total-tasks">0</span>
+                </div>
+                <div class="user-info-actions">
+                    <button type="button" id="edit-user-info-btn">Editar Informações</button>
+                    <button type="submit" id="save-user-info-btn" class="hidden">Salvar Informações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="confirm-modal-title">Confirmar Ação</h2>
+            <p id="confirm-modal-text">Você tem certeza?</p>
+            <div class="confirm-modal-actions">
+                <button type="button" id="confirm-modal-cancel-btn" class="btn-secondary">Cancelar</button>
+                <button type="button" id="confirm-modal-confirm-btn" class="btn-danger">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Login</h2>
+            <form id="login-form">
+                <label for="login-username">Usuário</label>
+                <input type="text" id="login-username" required autocomplete="username">
+                <label for="login-password">Senha</label>
+                <input type="password" id="login-password" required autocomplete="current-password">
+                <button type="submit">Entrar</button>
+                <p>Não tem uma conta? <a href="#" id="show-register-link">Registre-se</a></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="register-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Cadastrar-se</h2>
+            <form id="register-form">
+                <label for="register-name">Nome</label>
+                <input type="text" id="register-name" required autocomplete="name">
+                <label for="register-age">Idade</label>
+                <input type="number" id="register-age" required>
+                <label for="register-username">Usuário</label>
+                <input type="text" id="register-username" required autocomplete="username">
+                <label for="register-password">Senha</label>
+                <input type="password" id="register-password" required autocomplete="new-password">
+                <button type="submit">Registrar</button>
+                <p>Já tem uma conta? <a href="#" id="show-login-link">Faça login</a></p>
+            </form>
+        </div>
+    </div>
+
+    <audio id="add-sound" src="sounds/add-task.mp3"></audio>
+    <audio id="complete-sound" src="sounds/complete-task.mp3"></audio>
+    <audio id="delete-sound" src="sounds/delete-task.mp3"></audio>
+
+    <script src="script.js" defer></script>
+    
+</body>
+</html>
