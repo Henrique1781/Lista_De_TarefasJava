@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minha Rotina - Controle Pessoal</title>
-
+    <meta name="theme-color" content="#6c63ff"/>
+    <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 
     <link rel="stylesheet" href="style.css">
@@ -97,7 +98,7 @@
             <i class="ph-light ph-clipboard-text"></i>
             <p>Nenhuma tarefa por aqui.</p>
         </div>
-        
+
         <div id="no-filtered-tasks-message" class="hidden">
             <i class="ph-light ph-files"></i>
             <p>Nenhuma tarefa corresponde aos filtros.</p>
@@ -107,7 +108,7 @@
             <h3>Concluídas</h3>
             <div id="completed-task-list"></div>
         </div>
-        
+
     </div>
 
     <button type="button" class="fab" id="add-task-btn"><i class="ph-bold ph-plus"></i></button>
@@ -219,7 +220,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="login-modal" class="modal hidden">
         <div class="modal-content">
             <h2>Login</h2>
@@ -257,6 +258,6 @@
     <audio id="delete-sound" src="sounds/delete-task.mp3"></audio>
 
     <script src="script.js" defer></script>
-    
+
 </body>
 </html>

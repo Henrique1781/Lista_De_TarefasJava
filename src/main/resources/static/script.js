@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 3. FUNÇÕES DA API ---
     async function apiRequest(endpoint, method = 'GET', body = null, showLoader = false) {
         if (showLoader) loader.classList.remove('hidden');
-        
+
         let url;
         try {
             url = `${API_BASE_URL}${endpoint}`;
@@ -166,14 +166,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const fiveMinutesInMillis = 5 * 60 * 1000;
 
         const completedCount = allTasks.filter(task => task.completed).length;
-        
+
         const overdueCount = allTasks.filter(task =>
             !task.completed &&
             task.date &&
             task.time &&
             (now.getTime() - new Date(`${task.date}T${task.time}`).getTime()) > fiveMinutesInMillis
         ).length;
-        
+
         const pendingCount = allTasks.length - completedCount - overdueCount;
 
         totalTasksStat.textContent = allTasks.length;
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const taskCard = document.createElement('div');
         taskCard.className = `task-card priority-${task.priority}`;
         taskCard.dataset.id = task.id;
-        
+
         if (task.completed) {
             taskCard.classList.add('completed');
         }
@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast("Formato de horário inválido. Use HH:mm.", true);
             return;
         }
-        
+
         const dateValue = document.getElementById('date').value;
         const today = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
         if (dateValue === today && timeValue) {
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await apiRequest(endpoint, method, taskData, true);
             showToast(id ? "Tarefa atualizada com sucesso!" : "Tarefa adicionada com sucesso!");
-            
+
             if (!id) { 
                 playSound(addSound, 0.5);
                 const currentTotal = parseInt(localStorage.getItem('totalTasks') || '0', 10);
@@ -461,10 +461,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         let startHour = now.getHours();
         let startMinute = now.getMinutes();
-    
+
         const dateValue = document.getElementById('date').value;
         const today = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-    
+
         if (dateValue === today) {
             if (startMinute < 30) {
                 startMinute = 30;
@@ -476,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
             startHour = 0;
             startMinute = 0;
         }
-    
+
         for (let h = startHour; h < 24; h++) {
             for (let m = (h === startHour ? startMinute : 0); m < 60; m += 30) {
                 const hourString = h.toString().padStart(2, '0');
@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginModal.classList.add('hidden');
         registerModal.classList.add('hidden');
     }
-    
+
     function showLoggedOutState() {
         mainContainer.classList.remove('hidden');
         fab.classList.add('hidden');
@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loader.classList.add('hidden');
         if (autoRefreshInterval) clearInterval(autoRefreshInterval);
     }
-    
+
     function logout() {
         authToken = null;
         localStorage.clear();
@@ -605,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(error.message || "Erro ao registrar usuário. Tente outro nome.", true);
         }
     });
-    
+
     function setUserInfoViewMode() {
         userInfoView.classList.remove('hidden');
         userInfoEdit.classList.add('hidden');
@@ -651,7 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
             profileIconBtn.innerHTML = `<i class="ph-fill ph-user"></i>`;
         }
     }
-    
+
     function openUserInfoModal() {
         const currentUserData = {
             name: localStorage.getItem('userName'),
@@ -690,7 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateData.photo = existingPhoto;
                 }
             }
-            
+
             try {
                 await apiRequest('/api/user/profile', 'PUT', updateData, true);
                 localStorage.setItem('userName', name);
@@ -698,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (updateData.photo) {
                     localStorage.setItem('userPhoto', updateData.photo);
                 }
-                
+
                 const refreshedUserData = {
                     name: name,
                     age: age,
@@ -785,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Este navegador não suporta notificações.");
             return;
         }
-        
+
         console.log(`Status atual da permissão de notificação: ${Notification.permission}`);
 
         if (Notification.permission === 'default') {
@@ -806,13 +806,13 @@ document.addEventListener('DOMContentLoaded', () => {
              console.log("Notificação bloqueada. Permissão não concedida.");
              return;
         }
-        
+
         console.log(`A tentar mostrar notificação: Título - "${title}"`);
-        
+
         const options = { body };
         new Notification(title, options);
     }
-    
+
     function checkAndUpdateCountdown() {
         const now = new Date();
         allTasks.forEach(task => {
@@ -851,7 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffMillis = now - taskDateTime;
             const fiveMinMillis = 5 * 60 * 1000;
             const oneHourMillis = 60 * 60 * 1000;
-            
+
             let notificationToSend = null;
             let newNotificationState = task.notificationState;
 
@@ -874,10 +874,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (notificationToSend) {
                 showNotification(notificationToSend.title, notificationToSend.body);
-                
+
                 const originalState = task.notificationState;
                 task.notificationState = newNotificationState;
-                
+
                 try {
                     await apiRequest(`/api/tasks/${task.id}`, 'PUT', task);
                 } catch (error) {
@@ -913,11 +913,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const tomorrow = new Date(now);
         tomorrow.setDate(now.getDate() + 1);
         tomorrow.setHours(0, 0, 0, 0);
-    
+
         const diffMillis = tomorrow - now;
         const hours = Math.floor(diffMillis / (1000 * 60 * 60));
         const minutes = Math.floor((diffMillis % (1000 * 60 * 60)) / (1000 * 60));
-    
+
         document.querySelectorAll('.reactivation-countdown span').forEach(span => {
             span.textContent = `Reativa em ${hours}h ${minutes}m`;
         });
@@ -944,7 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function scheduleTaskChecks() {
         if (taskCheckInterval) clearInterval(taskCheckInterval);
-        
+
         function runPeriodicChecks() {
             allTasks.forEach(task => {
                 const taskCard = document.querySelector(`.task-card[data-id='${task.id}']`);
@@ -952,7 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateTaskStatusClasses(taskCard, task);
                 }
             });
-            
+
             checkAndUpdateCountdown();
             checkTasksAndSendNotifications();
             checkAndResetRecurringTasks();
@@ -994,10 +994,10 @@ document.addEventListener('DOMContentLoaded', () => {
             locationWeatherSection.style.display = 'grid';
         }
     }
-    
+
     function startClock(timezone) {
         if (clockInterval) clearInterval(clockInterval);
-    
+
         function updateClock() {
             const now = new Date();
             const timeOptions = {
@@ -1012,11 +1012,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 day: 'numeric',
                 timeZone: timezone,
             };
-    
+
             currentTimeEl.textContent = now.toLocaleTimeString('pt-BR', timeOptions);
             currentDateEl.textContent = new Intl.DateTimeFormat('pt-BR', dateOptions).format(now).replace(/(^|\s)\S/g, l => l.toUpperCase());
         }
-    
+
         updateClock();
         clockInterval = setInterval(updateClock, 1000);
     }
@@ -1069,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTheme(savedTheme);
         const savedMuteState = localStorage.getItem('isMuted') === 'true';
         setMute(savedMuteState);
-        
+
         const currentUserData = {
             name: localStorage.getItem('userName'),
             age: localStorage.getItem('userAge'),
@@ -1095,10 +1095,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registrado com sucesso:', registration);
+                })
+                .catch(error => {
+                    console.log('Falha ao registrar o Service Worker:', error);
+                });
+        }
+    }
+
+    function startSelfPing() {
+      setInterval(async () => {
+        try {
+          await fetch('/api/ping');
+          console.log('Ping sent to keep server alive.');
+        } catch (error) {
+          console.error('Ping failed:', error);
+        }
+      }, 5 * 60 * 1000); // a cada 5 minutos
+    }
+
     if (authToken) {
         showLoginState();
         initializeApp();
     } else {
         showLoggedOutState();
     }
+
+    registerServiceWorker();
+    startSelfPing();
 });

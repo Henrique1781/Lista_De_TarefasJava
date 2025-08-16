@@ -47,7 +47,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Dentro de /api/, permite o acesso público a login e registro
-                        .requestMatchers("/api/user/login", "/api/user/register").permitAll()
+                        .requestMatchers("/api/user/login", "/api/user/register", "/api/ping").permitAll()
                         // Exige autenticação para qualquer outra rota /api/
                         .anyRequest().authenticated()
                 )
