@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const completedTaskList = document.getElementById('completed-task-list');
     const completedSection = document.getElementById('completed-section');
     const noTasksMessage = document.getElementById('no-tasks-message');
-    // NOVO: Seleciona o novo elemento de mensagem de filtro
     const noFilteredTasksMessage = document.getElementById('no-filtered-tasks-message');
     const filterControls = document.querySelector('.filter-controls');
     const categoryFilterControls = document.getElementById('category-filter-controls');
@@ -26,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const hiddenTaskId = document.getElementById('task-id');
     const saveTaskBtn = document.getElementById('save-task-btn');
 
-    // Elementos de sugestão de horário
     const timeInput = document.getElementById('time');
     const timeSuggestions = document.getElementById('time-suggestions');
 
@@ -45,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelBtn = document.getElementById('confirm-modal-cancel-btn');
     const toastContainer = document.getElementById('toast-container');
 
-    // --- Elementos de Autenticação ---
     const loginModal = document.getElementById('login-modal');
     const registerModal = document.getElementById('register-modal');
     const loginForm = document.getElementById('login-form');
@@ -53,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const showRegisterLink = document.getElementById('show-register-link');
     const showLoginLink = document.getElementById('show-login-link');
 
-    // --- Seleção de elementos do usuário ---
     const welcomeGreeting = document.getElementById('welcome-greeting');
     const profileIconBtn = document.getElementById('profile-icon-btn');
     const userInfoModal = document.getElementById('user-info-modal');
@@ -74,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveUserInfoBtn = document.getElementById('save-user-info-btn');
     const userTotalTasksSpan = document.getElementById('user-total-tasks');
 
-    // --- ELEMENTOS DE CLIMA E LOCALIZAÇÃO ---
     const locationWeatherSection = document.getElementById('location-weather-section');
     const weatherIconEl = document.getElementById('weather-icon');
     const temperatureEl = document.getElementById('temperature');
@@ -91,6 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let authToken = localStorage.getItem('authToken');
     const API_BASE_URL = '';
     let resolveConfirm;
+
+    let deferredInstallPrompt = null;
+    const installPwaBtn = document.getElementById('install-pwa-btn');
 
     const categoryEmojis = {
         'Pessoal': '👤', 'Trabalho': '💼', 'Saúde': '❤️',
@@ -220,20 +218,15 @@ document.addEventListener('DOMContentLoaded', () => {
             filteredPendingTasks = filteredPendingTasks.filter(task => task.category === currentCategoryFilter);
         }
 
-        // --- NOVA LÓGICA DE MENSAGENS ---
         noTasksMessage.classList.add('hidden');
         noFilteredTasksMessage.classList.add('hidden');
 
         if (filteredPendingTasks.length > 0) {
-            // Caso 1: Há tarefas para mostrar.
             filteredPendingTasks.forEach(task => taskList.appendChild(createTaskElement(task)));
         } else {
-            // Caso 2: Nenhuma tarefa para mostrar.
             if (allTasks.length === 0) {
-                // 2a: Não há nenhuma tarefa. Mostra "Nenhuma tarefa por aqui."
                 noTasksMessage.classList.remove('hidden');
             } else {
-                // 2b: Há tarefas, mas o filtro não encontrou nenhuma. Mostra "Nenhuma tarefa corresponde aos filtros."
                 noFilteredTasksMessage.classList.remove('hidden');
             }
         }
@@ -873,16 +866,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (notificationToSend) {
-                showNotification(notificationToSend.title, notificationToSend.body);
+                const notificationFlag = `notif_${task.id}_${newNotificationState}`;
+                const flagTime = localStorage.getItem(notificationFlag);
+                const currentTime = Date.now();
 
-                const originalState = task.notificationState;
-                task.notificationState = newNotificationState;
+                if (!flagTime || (currentTime - parseInt(flagTime) > 60000)) {
+                    localStorage.setItem(notificationFlag, currentTime.toString());
 
-                try {
-                    await apiRequest(`/api/tasks/${task.id}`, 'PUT', task);
-                } catch (error) {
-                    task.notificationState = originalState;
-                    console.error(`Falha ao salvar o estado da notificação para a tarefa ${task.id}`, error);
+                    showNotification(notificationToSend.title, notificationToSend.body);
+
+                    const originalState = task.notificationState;
+                    task.notificationState = newNotificationState;
+
+                    try {
+                        await apiRequest(`/api/tasks/${task.id}`, 'PUT', task);
+                    } catch (error) {
+                        task.notificationState = originalState;
+                        console.error(`Falha ao salvar o estado da notificação para a tarefa ${task.id}`, error);
+                    }
                 }
             }
         });
@@ -1023,38 +1024,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getWeatherIcon(weatherCode) {
         const icons = {
-            0: 'ph-fill ph-sun',
-            1: 'ph-fill ph-cloud-sun',
-            2: 'ph-fill ph-cloud',
-            3: 'ph-fill ph-clouds',
-            45: 'ph-fill ph-fog',
-            48: 'ph-fill ph-fog',
-            51: 'ph-light ph-cloud-drizzle',
-            53: 'ph-fill ph-cloud-drizzle',
-            55: 'ph-bold ph-cloud-drizzle',
-            56: 'ph-light ph-cloud-snow',
-            57: 'ph-fill ph-cloud-snow',
-            61: 'ph-light ph-cloud-rain',
-            63: 'ph-fill ph-cloud-rain',
-            65: 'ph-bold ph-cloud-rain',
-            66: 'ph-light ph-cloud-rain',
-            67: 'ph-bold ph-cloud-rain',
-            71: 'ph-light ph-cloud-snow',
-            73: 'ph-fill ph-cloud-snow',
-            75: 'ph-bold ph-cloud-snow',
-            77: 'ph-fill ph-snowflake',
-            80: 'ph-light ph-cloud-lightning',
-            81: 'ph-fill ph-cloud-lightning',
-            82: 'ph-bold ph-cloud-lightning',
-            85: 'ph-fill ph-cloud-snow',
-            86: 'ph-bold ph-cloud-snow',
-            95: 'ph-fill ph-cloud-lightning',
-            96: 'ph-fill ph-cloud-lightning',
-            99: 'ph-bold ph-cloud-lightning',
+            0: 'ph-fill ph-sun', 1: 'ph-fill ph-cloud-sun', 2: 'ph-fill ph-cloud', 3: 'ph-fill ph-clouds',
+            45: 'ph-fill ph-fog', 48: 'ph-fill ph-fog', 51: 'ph-light ph-cloud-drizzle', 53: 'ph-fill ph-cloud-drizzle',
+            55: 'ph-bold ph-cloud-drizzle', 56: 'ph-light ph-cloud-snow', 57: 'ph-fill ph-cloud-snow',
+            61: 'ph-light ph-cloud-rain', 63: 'ph-fill ph-cloud-rain', 65: 'ph-bold ph-cloud-rain',
+            66: 'ph-light ph-cloud-rain', 67: 'ph-bold ph-cloud-rain', 71: 'ph-light ph-cloud-snow',
+            73: 'ph-fill ph-cloud-snow', 75: 'ph-bold ph-cloud-snow', 77: 'ph-fill ph-snowflake',
+            80: 'ph-light ph-cloud-lightning', 81: 'ph-fill ph-cloud-lightning', 82: 'ph-bold ph-cloud-lightning',
+            85: 'ph-fill ph-cloud-snow', 86: 'ph-bold ph-cloud-snow', 95: 'ph-fill ph-cloud-lightning',
+            96: 'ph-fill ph-cloud-lightning', 99: 'ph-bold ph-cloud-lightning',
         };
         return icons[weatherCode] || 'ph-fill ph-question';
     }
-
 
     window.addEventListener('click', (event) => {
       if (event.target === taskModal) closeModal();
@@ -1098,12 +1079,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/service-worker.js')
-                .then(registration => {
-                    console.log('Service Worker registrado com sucesso:', registration);
-                })
-                .catch(error => {
-                    console.log('Falha ao registrar o Service Worker:', error);
-                });
+                .then(registration => console.log('Service Worker registrado com sucesso:', registration))
+                .catch(error => console.log('Falha ao registrar o Service Worker:', error));
         }
     }
 
@@ -1115,8 +1092,36 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
           console.error('Ping failed:', error);
         }
-      }, 5 * 60 * 1000); // a cada 5 minutos
+      }, 5 * 60 * 1000);
     }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        if (installPwaBtn) {
+            installPwaBtn.classList.remove('hidden');
+        }
+    });
+
+    if (installPwaBtn) {
+        installPwaBtn.addEventListener('click', async () => {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                const { outcome } = await deferredInstallPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredInstallPrompt = null;
+                installPwaBtn.classList.add('hidden');
+            }
+        });
+    }
+
+    window.addEventListener('appinstalled', () => {
+        deferredInstallPrompt = null;
+        if (installPwaBtn) {
+            installPwaBtn.classList.add('hidden');
+        }
+        console.log('PWA was installed');
+    });
 
     if (authToken) {
         showLoginState();
