@@ -98,6 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastCheckedDate = new Date().getDate();
     let autoRefreshInterval;
 
+    // --- FUNÇÃO PARA NOTIFICAR OUTRAS ABAS ---
+    function notifyOtherTabs() {
+        localStorage.setItem('tasks_last_updated', Date.now());
+    }
+
     // --- FUNÇÕES DE UTILIDADE ---
     async function playSound(audioElement, volume = 0.5) {
         if (isMuted) return;
@@ -329,7 +334,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (isChecked) playSound(completeSound, 0.3);
-                loadTasks();
+                await loadTasks();
+                notifyOtherTabs();
             } catch (error) {
                 showToast("Erro ao atualizar a tarefa.", true);
                 loadTasks();
@@ -354,7 +360,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     playSound(deleteSound, 0.4);
                     await apiRequest(`/api/tasks/${id}`, 'DELETE', null, true);
                     showToast("Tarefa excluída com sucesso!");
-                    loadTasks();
+                    await loadTasks();
+                    notifyOtherTabs();
                 } catch (error) {
                     showToast("Erro ao excluir a tarefa.", true);
                 }
@@ -441,7 +448,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             closeModal();
-            loadTasks();
+            await loadTasks();
+            notifyOtherTabs();
         } catch (error) {
             showToast("Erro ao salvar a tarefa.", true);
         }
@@ -965,14 +973,43 @@ document.addEventListener('DOMContentLoaded', () => {
         taskCheckInterval = setInterval(runPeriodicChecks, 30000);
     }
 
-    // --- LÓGICA DE CLIMA E LOCALIZAÇÃO ---
+    // --- LÓGICA DE CLIMA E LOCALIZAÇÃO (COM FALLBACK) ---
     async function fetchLocationAndWeather() {
+        let geoData;
         try {
+            // Provedor primário
             const geoResponse = await fetch('https://ipapi.co/json/');
-            if (!geoResponse.ok) throw new Error('Falha ao obter geolocalização.');
-            const geoData = await geoResponse.json();
+            if (!geoResponse.ok) throw new Error('ipapi.co falhou');
+            geoData = await geoResponse.json();
             if (geoData.error) throw new Error(geoData.reason);
+        } catch (error) {
+            console.warn("Falha ao obter geolocalização do provedor principal (ipapi.co). Tentando fallback.", error);
+            try {
+                // Provedor secundário (fallback)
+                const fallbackResponse = await fetch('https://ip-api.com/json');
+                if (!fallbackResponse.ok) throw new Error('ip-api.com falhou');
+                const fallbackData = await fallbackResponse.json();
+                if (fallbackData.status !== 'success') throw new Error(fallbackData.message);
 
+                geoData = {
+                    city: fallbackData.city,
+                    country_name: fallbackData.country,
+                    latitude: fallbackData.lat,
+                    longitude: fallbackData.lon,
+                    timezone: fallbackData.timezone
+                };
+            } catch (fallbackError) {
+                console.error("Erro ao carregar informações de localização de ambos os provedores:", fallbackError);
+                locationEl.textContent = 'Não foi possível carregar.';
+                temperatureEl.textContent = '--';
+                weatherIconEl.className = 'ph-fill ph-question';
+                startClock('America/Sao_Paulo');
+                locationWeatherSection.style.display = 'grid';
+                return;
+            }
+        }
+
+        try {
             const { city, country_name, latitude, longitude, timezone } = geoData;
             locationEl.textContent = `${city}, ${country_name}`;
             const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
@@ -986,12 +1023,12 @@ document.addEventListener('DOMContentLoaded', () => {
             weatherIconEl.className = getWeatherIcon(weatherCode);
             startClock(timezone);
             locationWeatherSection.style.display = 'grid';
-        } catch (error) {
-            console.error("Erro ao carregar informações de localização e clima:", error);
-            locationEl.textContent = 'Não foi possível carregar.';
+        } catch (weatherError) {
+            console.error("Erro ao carregar informações do clima:", weatherError);
+            locationEl.textContent = 'Clima indisponível.';
             temperatureEl.textContent = '--';
-            weatherIconEl.className = 'ph-fill ph-question';
-            startClock('America/Sao_Paulo');
+            weatherIconEl.className = 'ph-fill ph-cloud-slash';
+            startClock(geoData.timezone || 'America/Sao_Paulo');
             locationWeatherSection.style.display = 'grid';
         }
     }
@@ -1002,16 +1039,10 @@ document.addEventListener('DOMContentLoaded', () => {
         function updateClock() {
             const now = new Date();
             const timeOptions = {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-                timeZone: timezone,
+                hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone,
             };
             const dateOptions = {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                timeZone: timezone,
+                year: 'numeric', month: 'long', day: 'numeric', timeZone: timezone,
             };
 
             currentTimeEl.textContent = now.toLocaleTimeString('pt-BR', timeOptions);
@@ -1067,7 +1098,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchLocationAndWeather()
             ]);
             if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            autoRefreshInterval = setInterval(loadTasks, 30000);
+            autoRefreshInterval = setInterval(loadTasks, 30000); // Mantém a atualização a cada 30s para sincronizar entre dispositivos
         } catch (error) {
             console.error("Erro durante a inicialização:", error);
             showToast("Ocorreu um erro ao iniciar o aplicativo.", true);
@@ -1095,6 +1126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 5 * 60 * 1000);
     }
 
+    // --- LÓGICA PWA E SINCRONIZAÇÃO DE ABAS ---
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredInstallPrompt = e;
@@ -1123,6 +1155,13 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('PWA was installed');
     });
 
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'tasks_last_updated') {
+            loadTasks();
+        }
+    });
+
+    // --- INÍCIO DA EXECUÇÃO ---
     if (authToken) {
         showLoginState();
         initializeApp();
