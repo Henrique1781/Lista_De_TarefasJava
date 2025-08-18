@@ -13,23 +13,22 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-@Component
+// --- MUDANÇA: ADICIONAMOS UM NOME ÚNICO AO NOSSO COMPONENTE ---
+@Component("appTaskScheduler")
 @EnableScheduling
 public class TaskScheduler {
 
-    // --- MUDANÇA: CAMPOS FINAIS (SEM @Autowired) ---
     private final TaskRepository taskRepository;
     private final NotificationService notificationService;
     private final PushSubscriptionRepository subscriptionRepository;
 
-    // --- MUDANÇA: CONSTRUTOR PARA INJEÇÃO DE DEPENDÊNCIA ---
     public TaskScheduler(TaskRepository taskRepository, NotificationService notificationService, PushSubscriptionRepository subscriptionRepository) {
         this.taskRepository = taskRepository;
         this.notificationService = notificationService;
         this.subscriptionRepository = subscriptionRepository;
     }
 
-    @Scheduled(fixedRate = 60000) // Executa a cada 60 segundos
+    @Scheduled(fixedRate = 60000)
     public void checkTasksAndSendNotifications() {
         LocalDateTime now = LocalDateTime.now();
         List<Task> tasks = taskRepository.findAll();
@@ -63,7 +62,6 @@ public class TaskScheduler {
 
 
             if (notificationPayload != null) {
-                // Adicionado um null check para segurança
                 if (task.getUser() != null && task.getUser().getId() != null) {
                     List<PushSubscription> subscriptions = subscriptionRepository.findByUserId(task.getUser().getId());
                     for (PushSubscription sub : subscriptions) {
@@ -76,7 +74,6 @@ public class TaskScheduler {
         }
     }
 
-    // Agendado para rodar todo dia à meia-noite e 5 minutos
     @Scheduled(cron = "0 5 0 * * ?")
     public void resetRecurringTasks() {
         List<Task> tasksToReset = taskRepository.findAll().stream()
