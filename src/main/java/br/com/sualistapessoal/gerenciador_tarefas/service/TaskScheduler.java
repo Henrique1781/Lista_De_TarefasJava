@@ -4,7 +4,6 @@ import br.com.sualistapessoal.gerenciador_tarefas.PushSubscription;
 import br.com.sualistapessoal.gerenciador_tarefas.PushSubscriptionRepository;
 import br.com.sualistapessoal.gerenciador_tarefas.Task;
 import br.com.sualistapessoal.gerenciador_tarefas.TaskRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -18,14 +17,17 @@ import java.util.List;
 @EnableScheduling
 public class TaskScheduler {
 
-    @Autowired
-    private TaskRepository taskRepository;
+    // --- MUDANÇA: CAMPOS FINAIS (SEM @Autowired) ---
+    private final TaskRepository taskRepository;
+    private final NotificationService notificationService;
+    private final PushSubscriptionRepository subscriptionRepository;
 
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private PushSubscriptionRepository subscriptionRepository;
+    // --- MUDANÇA: CONSTRUTOR PARA INJEÇÃO DE DEPENDÊNCIA ---
+    public TaskScheduler(TaskRepository taskRepository, NotificationService notificationService, PushSubscriptionRepository subscriptionRepository) {
+        this.taskRepository = taskRepository;
+        this.notificationService = notificationService;
+        this.subscriptionRepository = subscriptionRepository;
+    }
 
     @Scheduled(fixedRate = 60000) // Executa a cada 60 segundos
     public void checkTasksAndSendNotifications() {
@@ -61,12 +63,15 @@ public class TaskScheduler {
 
 
             if (notificationPayload != null) {
-                List<PushSubscription> subscriptions = subscriptionRepository.findByUserId(task.getUser().getId());
-                for (PushSubscription sub : subscriptions) {
-                    notificationService.sendPushNotification(sub, notificationPayload);
+                // Adicionado um null check para segurança
+                if (task.getUser() != null && task.getUser().getId() != null) {
+                    List<PushSubscription> subscriptions = subscriptionRepository.findByUserId(task.getUser().getId());
+                    for (PushSubscription sub : subscriptions) {
+                        notificationService.sendPushNotification(sub, notificationPayload);
+                    }
+                    task.setNotificationState(newNotificationState);
+                    taskRepository.save(task);
                 }
-                task.setNotificationState(newNotificationState);
-                taskRepository.save(task);
             }
         }
     }
@@ -74,7 +79,6 @@ public class TaskScheduler {
     // Agendado para rodar todo dia à meia-noite e 5 minutos
     @Scheduled(cron = "0 5 0 * * ?")
     public void resetRecurringTasks() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
         List<Task> tasksToReset = taskRepository.findAll().stream()
                 .filter(task -> task.isRecurring() && task.isCompleted() && (task.getDate() == null || task.getDate().isBefore(LocalDate.now())))
                 .toList();
@@ -82,10 +86,7 @@ public class TaskScheduler {
         for (Task task : tasksToReset) {
             task.setCompleted(false);
             task.setNotificationState(0);
-
-            // Atualiza a data da tarefa para o dia de hoje
             task.setDate(LocalDate.now());
-
             taskRepository.save(task);
         }
     }

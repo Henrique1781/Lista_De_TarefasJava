@@ -1,6 +1,5 @@
 package br.com.sualistapessoal.gerenciador_tarefas;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,11 +11,15 @@ import java.util.Map;
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
-    @Autowired
-    private UserRepository userRepository;
+    // --- MUDANÇA: CAMPOS FINAIS (SEM @Autowired) ---
+    private final UserRepository userRepository;
+    private final PushSubscriptionRepository subscriptionRepository;
 
-    @Autowired
-    private PushSubscriptionRepository subscriptionRepository;
+    // --- MUDANÇA: CONSTRUTOR PARA INJEÇÃO DE DEPENDÊNCIA ---
+    public NotificationController(UserRepository userRepository, PushSubscriptionRepository subscriptionRepository) {
+        this.userRepository = userRepository;
+        this.subscriptionRepository = subscriptionRepository;
+    }
 
     @PostMapping("/subscribe")
     public ResponseEntity<?> subscribe(@RequestBody Map<String, String> subscriptionData, @AuthenticationPrincipal UserDetails userDetails) {

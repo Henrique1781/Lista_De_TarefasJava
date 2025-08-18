@@ -1,6 +1,5 @@
 package br.com.sualistapessoal.gerenciador_tarefas;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,18 +11,21 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class TaskController {
 
-    @Autowired
-    private TaskRepository taskRepository;
+    // --- MUDANÇA: CAMPOS FINAIS (SEM @Autowired) ---
+    private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    // --- MUDANÇA: CONSTRUTOR PARA INJEÇÃO DE DEPENDÊNCIA ---
+    public TaskController(TaskRepository taskRepository, UserRepository userRepository) {
+        this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
+    }
 
     @PostMapping
     public Task createTask(@RequestBody Task task, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado para criar a tarefa."));
 
-        // Incrementa o contador de tarefas criadas e salva o usuário
         long currentTotal = user.getTotalTasksCreated() != null ? user.getTotalTasksCreated() : 0L;
         user.setTotalTasksCreated(currentTotal + 1);
         userRepository.save(user);
