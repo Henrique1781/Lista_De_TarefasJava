@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let resolveConfirm;
 
     // **NOVO** VAPID_PUBLIC_KEY para notificações push
-    const VAPID_PUBLIC_KEY = "SUA_CHAVE_PUBLICA_AQUI"; // <-- COLE AQUI A MESMA CHAVE PÚBLICA DO application.properties
+    const VAPID_PUBLIC_KEY = "BD-SE_ox2JK8rP6vePVxGiVC5ytAtLAjvVJGm0RDcor9etmRVdEZYzO5KjXu_oAuMycKwIvNCqa0y8sg60tPCZA"; // <-- COLE AQUI A MESMA CHAVE PÚBLICA DO application.properties
 
     let deferredInstallPrompt = null;
     const installPwaBtn = document.getElementById('install-pwa-btn');
