@@ -87,8 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL = '';
     let resolveConfirm;
 
-    // **NOVO** VAPID_PUBLIC_KEY para notificações push
-    const VAPID_PUBLIC_KEY = "BD-SE_ox2JK8rP6vePVxGiVC5ytAtLAjvVJGm0RDcor9etmRVdEZYzO5KjXu_oAuMycKwIvNCqa0y8sg60tPCZA"; // <-- COLE AQUI A MESMA CHAVE PÚBLICA DO application.properties
+    const VAPID_PUBLIC_KEY = "BD_7Y_pl0kASgkA51mmGg0wI8j_2-4t4e1G1D0X9F4J7N5L2Z3Y3n9h8c6v5k1j2l3m4n5o6p7q8r9s0t";
 
     let deferredInstallPrompt = null;
     const installPwaBtn = document.getElementById('install-pwa-btn');
@@ -123,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (subscription) {
                 console.log('Usuário já inscrito para notificações push.');
-                return; // Já está inscrito
+                return;
             }
 
             const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
@@ -153,12 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- FUNÇÃO PARA NOTIFICAR OUTRAS ABAS ---
     function notifyOtherTabs() {
         localStorage.setItem('tasks_last_updated', Date.now());
     }
 
-    // --- FUNÇÕES DE UTILIDADE ---
     async function playSound(audioElement, volume = 0.5) {
         if (isMuted) return;
         try {
@@ -178,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => toast.remove(), 3000);
     }
 
-    // --- 3. FUNÇÕES DA API ---
     async function apiRequest(endpoint, method = 'GET', body = null, showLoader = false) {
         if (showLoader) loader.classList.remove('hidden');
 
@@ -218,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 4. RENDERIZAÇÃO E LÓGICA (Tarefas) ---
     function updateStats() {
         const now = new Date();
         const fiveMinutesInMillis = 5 * 60 * 1000;
@@ -362,7 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 5. MANIPULAÇÃO DE EVENTOS (Tarefas) ---
     document.body.addEventListener('click', async (event) => {
         const target = event.target;
         const taskCard = target.closest('.task-card');
@@ -511,7 +505,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     taskForm.addEventListener('submit', handleFormSubmit);
 
-    // --- 6. LÓGICA DO MODAL E SUGESTÕES DE HORÁRIO ---
     function populateTimeSuggestions() {
         timeSuggestions.innerHTML = '';
         const now = new Date();
@@ -592,7 +585,6 @@ document.addEventListener('DOMContentLoaded', () => {
     addTaskBtn.addEventListener('click', openModalForCreate);
     closeModalBtn.addEventListener('click', closeModal);
 
-    // --- 7. GESTÃO DE USUÁRIO E AUTENTICAÇÃO ---
     function showLoginState() {
         mainContainer.classList.remove('hidden');
         fab.classList.remove('hidden');
@@ -798,7 +790,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 8. FUNÇÕES GERAIS E DE NOTIFICAÇÃO ---
     function createCategoryFilters() {
         categoryFilterControls.innerHTML = '';
         const categories = Object.keys(categoryEmojis).filter(cat => cat !== 'Rotina' && cat !== 'Default');
@@ -846,13 +837,13 @@ document.addEventListener('DOMContentLoaded', () => {
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
                     showToast("Notificações ativadas!");
-                    subscribeUserToPush(); // Se o usuário permitir, inscrevemos ele.
+                    subscribeUserToPush();
                 } else {
                     showToast("Notificações não foram permitidas.", true);
                 }
             });
         } else if (Notification.permission === 'granted') {
-             subscribeUserToPush(); // Se já tem permissão, apenas inscrevemos.
+             subscribeUserToPush();
         }
     }
 
@@ -937,7 +928,6 @@ document.addEventListener('DOMContentLoaded', () => {
         taskCheckInterval = setInterval(runPeriodicChecks, 30000);
     }
 
-    // --- LÓGICA DE CLIMA E LOCALIZAÇÃO (COM FALLBACK) ---
     async function fetchLocationAndWeather() {
         let geoData;
         try {
@@ -973,7 +963,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const { city, country_name, latitude, longitude, timezone } = geoData;
-            locationEl.textContent = `${city}, ${country_name}`;
+            // --- MUDANÇA: Substituindo "Brazil" por "Brasil" ---
+            locationEl.textContent = `${city}, ${country_name}`.replace('Brazil', 'Brasil');
             const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
             const weatherResponse = await fetch(weatherUrl);
             if (!weatherResponse.ok) throw new Error('Falha ao obter dados do clima.');
@@ -1015,7 +1006,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clockInterval = setInterval(updateClock, 1000);
     }
 
-    // *** FUNÇÃO CORRIGIDA ***
     function getWeatherIcon(weatherCode) {
         const icons = {
             0: 'ph-fill ph-sun', 1: 'ph-fill ph-cloud-sun', 2: 'ph-fill ph-cloud', 3: 'ph-fill ph-clouds',
@@ -1028,7 +1018,6 @@ document.addEventListener('DOMContentLoaded', () => {
             85: 'ph-fill ph-cloud-snow', 86: 'ph-bold ph-cloud-snow', 95: 'ph-fill ph-cloud-lightning',
             96: 'ph-fill ph-cloud-lightning', 99: 'ph-bold ph-cloud-lightning',
         };
-        // Adiciona a classe base 'ph' que estava faltando
         return `ph ${icons[weatherCode] || 'ph-fill ph-question'}`;
     }
 
@@ -1038,7 +1027,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (event.target === userInfoModal) closeUserInfoModal();
     });
 
-    // --- INICIALIZAÇÃO ---
     async function initializeApp() {
         loader.classList.remove('hidden');
         const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -1062,7 +1050,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchLocationAndWeather()
             ]);
             if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            autoRefreshInterval = setInterval(loadTasks, 60000);
+            // --- MUDANÇA: Atualizando a cada 10 segundos ---
+            autoRefreshInterval = setInterval(loadTasks, 10000);
         } catch (error) {
             console.error("Erro durante a inicialização:", error);
             showToast("Ocorreu um erro ao iniciar o aplicativo.", true);
@@ -1090,7 +1079,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 5 * 60 * 1000);
     }
 
-    // --- LÓGICA PWA E SINCRONIZAÇÃO DE ABAS ---
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredInstallPrompt = e;
@@ -1125,7 +1113,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- INÍCIO DA EXECUÇÃO ---
     if (authToken) {
         showLoginState();
         initializeApp();
