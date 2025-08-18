@@ -87,6 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL = '';
     let resolveConfirm;
 
+    // **NOVO** VAPID_PUBLIC_KEY para notificações push
+    const VAPID_PUBLIC_KEY = "SUA_CHAVE_PUBLICA_AQUI"; // <-- COLE AQUI A MESMA CHAVE PÚBLICA DO application.properties
+
     let deferredInstallPrompt = null;
     const installPwaBtn = document.getElementById('install-pwa-btn');
 
@@ -95,8 +98,60 @@ document.addEventListener('DOMContentLoaded', () => {
         'Estudos': '📚', 'Rotina': '🔄', 'Default': '📌'
     };
     let taskCheckInterval;
-    let lastCheckedDate = new Date().getDate();
     let autoRefreshInterval;
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    async function subscribeUserToPush() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            console.warn('Push notifications não são suportadas neste navegador.');
+            return;
+        }
+
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            let subscription = await registration.pushManager.getSubscription();
+
+            if (subscription) {
+                console.log('Usuário já inscrito para notificações push.');
+                return; // Já está inscrito
+            }
+
+            const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+            subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: applicationServerKey
+            });
+
+            console.log('Nova inscrição para notificações push criada:', subscription);
+
+            const subData = subscription.toJSON();
+            const subscriptionPayload = {
+                endpoint: subData.endpoint,
+                p256dh: subData.keys.p256dh,
+                auth: subData.keys.auth
+            };
+
+            await apiRequest('/api/notifications/subscribe', 'POST', subscriptionPayload);
+            console.log('Inscrição enviada para o servidor com sucesso.');
+
+        } catch (error) {
+            console.error('Falha ao se inscrever para notificações push:', error);
+            if (Notification.permission === 'denied') {
+                showToast('As notificações foram bloqueadas. Habilite nas configurações do navegador.', true);
+            }
+        }
+    }
+
 
     // --- FUNÇÃO PARA NOTIFICAR OUTRAS ABAS ---
     function notifyOtherTabs() {
@@ -177,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             (now.getTime() - new Date(`${task.date}T${task.time}`).getTime()) > fiveMinutesInMillis
         ).length;
 
-        const pendingCount = allTasks.length - completedCount - overdueCount;
+        const pendingCount = allTasks.length - completedCount;
 
         totalTasksStat.textContent = allTasks.length;
         completedTasksStat.textContent = completedCount;
@@ -439,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await apiRequest(endpoint, method, taskData, true);
             showToast(id ? "Tarefa atualizada com sucesso!" : "Tarefa adicionada com sucesso!");
 
-            if (!id) { 
+            if (!id) {
                 playSound(addSound, 0.5);
                 const currentTotal = parseInt(localStorage.getItem('totalTasks') || '0', 10);
                 const newTotal = currentTotal + 1;
@@ -583,8 +638,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('totalTasks', data.totalTasks);
 
                 showLoginState();
-                updateUserInfoUI(data); 
-                initializeApp(); 
+                updateUserInfoUI(data);
+                initializeApp();
             }
         } catch (error) {
             showToast(error.message || "Erro ao fazer login.", true);
@@ -718,7 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (photoFile) {
             const reader = new FileReader();
             reader.onload = (e) => saveAndUpdate(e.target.result);
-            reader.readAsDataURL(photoFile);
+            reader.readAsDataURL(file);
         } else {
             saveAndUpdate(null);
         }
@@ -758,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setTheme(theme) {
         document.body.dataset.theme = theme;
-        themeIcon.className = theme === 'dark' ? 'ph-fill ph-moon' : 'ph-fill ph-sun';
+        themeIcon.className = theme === 'dark' ? 'ph ph-fill ph-moon' : 'ph ph-fill ph-sun';
         localStorage.setItem('theme', theme);
     }
     themeToggleBtn.addEventListener('click', () => {
@@ -766,7 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTheme(currentTheme === 'dark' ? 'light' : 'dark');
     });
 
-    function setMute(muted) { isMuted = muted; muteIcon.className = muted ? 'ph-fill ph-speaker-slash' : 'ph-fill ph-speaker-high'; localStorage.setItem('isMuted', muted); }
+    function setMute(muted) { isMuted = muted; muteIcon.className = muted ? 'ph ph-fill ph-speaker-slash' : 'ph ph-fill ph-speaker-high'; localStorage.setItem('isMuted', muted); }
     muteToggleBtn.addEventListener('click', () => setMute(!isMuted) );
 
     function showCustomConfirm(message) {
@@ -787,31 +842,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        console.log(`Status atual da permissão de notificação: ${Notification.permission}`);
-
         if (Notification.permission === 'default') {
-            console.log("A pedir permissão para notificações...");
             Notification.requestPermission().then(permission => {
-                console.log(`Permissão concedida pelo utilizador: ${permission}`);
                 if (permission === 'granted') {
                     showToast("Notificações ativadas!");
+                    subscribeUserToPush(); // Se o usuário permitir, inscrevemos ele.
                 } else {
                     showToast("Notificações não foram permitidas.", true);
                 }
             });
+        } else if (Notification.permission === 'granted') {
+             subscribeUserToPush(); // Se já tem permissão, apenas inscrevemos.
         }
-    }
-
-    function showNotification(title, body) {
-        if (!('Notification' in window) || Notification.permission !== 'granted') {
-             console.log("Notificação bloqueada. Permissão não concedida.");
-             return;
-        }
-
-        console.log(`A tentar mostrar notificação: Título - "${title}"`);
-
-        const options = { body };
-        new Notification(title, options);
     }
 
     function checkAndUpdateCountdown() {
@@ -839,82 +881,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-    }
-
-    function checkTasksAndSendNotifications() {
-        const now = new Date();
-        allTasks.forEach(async task => {
-            if (task.completed || !task.withNotification || !task.date || !task.time) {
-                return;
-            }
-
-            const taskDateTime = new Date(`${task.date}T${task.time}`);
-            const diffMillis = now - taskDateTime;
-            const fiveMinMillis = 5 * 60 * 1000;
-            const oneHourMillis = 60 * 60 * 1000;
-
-            let notificationToSend = null;
-            let newNotificationState = task.notificationState;
-
-            if (diffMillis >= -fiveMinMillis && diffMillis < 0 && task.notificationState < 1) {
-                notificationToSend = { title: `Lembrete: ${task.title}`, body: `Sua tarefa começa em 5 minutos.` };
-                newNotificationState = 1;
-            } 
-            else if (diffMillis >= 0 && task.notificationState < 2) {
-                notificationToSend = { title: `Lembrete: ${task.title}`, body: `Sua tarefa está agendada para agora. Não se esqueça!` };
-                newNotificationState = 2;
-            } 
-            else if (diffMillis >= fiveMinMillis && task.notificationState < 3) {
-                notificationToSend = { title: `Tarefa Atrasada: ${task.title}`, body: `Já se passaram 5 minutos. Se já concluiu, marque a tarefa como feita.` };
-                newNotificationState = 3;
-            }
-            else if (diffMillis >= oneHourMillis && task.notificationState < 4) {
-                notificationToSend = { title: `Pendente: ${task.title}`, body: `Esta tarefa está pendente e atrasada há mais de uma hora.` };
-                newNotificationState = 4;
-            }
-
-            if (notificationToSend) {
-                const notificationFlag = `notif_${task.id}_${newNotificationState}`;
-                const flagTime = localStorage.getItem(notificationFlag);
-                const currentTime = Date.now();
-
-                if (!flagTime || (currentTime - parseInt(flagTime) > 60000)) {
-                    localStorage.setItem(notificationFlag, currentTime.toString());
-
-                    showNotification(notificationToSend.title, notificationToSend.body);
-
-                    const originalState = task.notificationState;
-                    task.notificationState = newNotificationState;
-
-                    try {
-                        await apiRequest(`/api/tasks/${task.id}`, 'PUT', task);
-                    } catch (error) {
-                        task.notificationState = originalState;
-                        console.error(`Falha ao salvar o estado da notificação para a tarefa ${task.id}`, error);
-                    }
-                }
-            }
-        });
-    }
-
-    async function checkAndResetRecurringTasks() {
-        const currentDate = new Date().getDate();
-        if (currentDate !== lastCheckedDate) {
-            lastCheckedDate = currentDate;
-            const recurringTasksToReset = allTasks.filter(task => task.recurring && task.completed);
-            if (recurringTasksToReset.length > 0) {
-                const promises = recurringTasksToReset.map(task => {
-                    task.completed = false;
-                    task.notificationState = 0;
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    task.date = tomorrow.toISOString().split('T')[0];
-                    return apiRequest(`/api/tasks/${task.id}`, 'PUT', task);
-                });
-                await Promise.all(promises);
-                loadTasks();
-            }
-        }
     }
 
     function updateReactivationCountdown() {
@@ -963,8 +929,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             checkAndUpdateCountdown();
-            checkTasksAndSendNotifications();
-            checkAndResetRecurringTasks();
             updateReactivationCountdown();
             updateStats();
         }
@@ -977,7 +941,6 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchLocationAndWeather() {
         let geoData;
         try {
-            // Provedor primário
             const geoResponse = await fetch('https://ipapi.co/json/');
             if (!geoResponse.ok) throw new Error('ipapi.co falhou');
             geoData = await geoResponse.json();
@@ -985,7 +948,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.warn("Falha ao obter geolocalização do provedor principal (ipapi.co). Tentando fallback.", error);
             try {
-                // Provedor secundário (fallback)
                 const fallbackResponse = await fetch('https://ip-api.com/json');
                 if (!fallbackResponse.ok) throw new Error('ip-api.com falhou');
                 const fallbackData = await fallbackResponse.json();
@@ -1002,7 +964,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Erro ao carregar informações de localização de ambos os provedores:", fallbackError);
                 locationEl.textContent = 'Não foi possível carregar.';
                 temperatureEl.textContent = '--';
-                weatherIconEl.className = 'ph-fill ph-question';
+                weatherIconEl.className = 'ph ph-fill ph-question';
                 startClock('America/Sao_Paulo');
                 locationWeatherSection.style.display = 'grid';
                 return;
@@ -1027,7 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Erro ao carregar informações do clima:", weatherError);
             locationEl.textContent = 'Clima indisponível.';
             temperatureEl.textContent = '--';
-            weatherIconEl.className = 'ph-fill ph-cloud-slash';
+            weatherIconEl.className = 'ph ph-fill ph-cloud-slash';
             startClock(geoData.timezone || 'America/Sao_Paulo');
             locationWeatherSection.style.display = 'grid';
         }
@@ -1053,6 +1015,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clockInterval = setInterval(updateClock, 1000);
     }
 
+    // *** FUNÇÃO CORRIGIDA ***
     function getWeatherIcon(weatherCode) {
         const icons = {
             0: 'ph-fill ph-sun', 1: 'ph-fill ph-cloud-sun', 2: 'ph-fill ph-cloud', 3: 'ph-fill ph-clouds',
@@ -1065,7 +1028,8 @@ document.addEventListener('DOMContentLoaded', () => {
             85: 'ph-fill ph-cloud-snow', 86: 'ph-bold ph-cloud-snow', 95: 'ph-fill ph-cloud-lightning',
             96: 'ph-fill ph-cloud-lightning', 99: 'ph-bold ph-cloud-lightning',
         };
-        return icons[weatherCode] || 'ph-fill ph-question';
+        // Adiciona a classe base 'ph' que estava faltando
+        return `ph ${icons[weatherCode] || 'ph-fill ph-question'}`;
     }
 
     window.addEventListener('click', (event) => {
@@ -1098,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchLocationAndWeather()
             ]);
             if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            autoRefreshInterval = setInterval(loadTasks, 30000); // Mantém a atualização a cada 30s para sincronizar entre dispositivos
+            autoRefreshInterval = setInterval(loadTasks, 60000);
         } catch (error) {
             console.error("Erro durante a inicialização:", error);
             showToast("Ocorreu um erro ao iniciar o aplicativo.", true);

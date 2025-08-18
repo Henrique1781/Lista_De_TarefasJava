@@ -33,6 +33,11 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Task> tasks;
 
+    // NOVA RELAÇÃO: Adicionando a relação com as inscrições de notificação
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PushSubscription> subscriptions;
+
+
     // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -52,4 +57,8 @@ public class User {
     // GETTER E SETTER PARA O NOVO CAMPO
     public Long getTotalTasksCreated() { return totalTasksCreated; }
     public void setTotalTasksCreated(Long totalTasksCreated) { this.totalTasksCreated = totalTasksCreated; }
+
+    // GETTER E SETTER PARA A NOVA RELAÇÃO
+    public List<PushSubscription> getSubscriptions() { return subscriptions; }
+    public void setSubscriptions(List<PushSubscription> subscriptions) { this.subscriptions = subscriptions; }
 }
