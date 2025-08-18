@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL = '';
     let resolveConfirm;
 
-    const VAPID_PUBLIC_KEY = "BD-SE_ox2JK8rP6vePVxGiVC5ytAtLAjvVJGm0RDcor9etmRVdEZYzO5KjXu_oAuMycKwIvNCqa0y8sg60tPCZA";
+    const VAPID_PUBLIC_KEY = "BADQg1joQgGBAv-dLHlpTWwCJj5gLU_loMSC2Ajh_-FkzhLPmRsDLtDARxGX5oHHdXeJvTid_EgG6wT0hYPnQJE";
 
     let deferredInstallPrompt = null;
     const installPwaBtn = document.getElementById('install-pwa-btn');
